@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini-SOC · מסך ניטור</title>
+<style>
+:root{color-scheme:dark;font-family:Arial,system-ui,sans-serif;background:#0b1120;color:#e7edf8}*{box-sizing:border-box}body{margin:0}main{max-width:1280px;margin:auto;padding:32px 24px}header{display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid #293348;padding-bottom:24px}h1{font-size:30px;margin:10px 0}h2{font-size:20px;margin:0}p{color:#aab9ce;line-height:1.6}a{color:#75e2c0;text-decoration:none}a:hover{text-decoration:underline}.brand{letter-spacing:3px;color:#75e2c0;font-size:13px;font-weight:bold}.status{font-size:14px;color:#aab9ce}.status.ok{color:#75e2c0}.status.error{color:#ff9b9b}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:28px 0}.card,section{border:1px solid #293348;border-radius:14px;background:#121c2d}.card{padding:22px}.card span{color:#aab9ce;font-size:14px}.card strong{display:block;font-size:36px;margin-top:14px;font-variant-numeric:tabular-nums}.card:nth-child(1) strong{color:#75e2c0}.card:nth-child(2) strong{color:#ffca7a}.card:nth-child(3) strong{color:#ff9b9b}.card:nth-child(4) strong{color:#a7b9ff}section{margin:20px 0;overflow:hidden}.toolbar{padding:20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.tools{display:flex;gap:10px;flex-wrap:wrap}input,select,button{font:inherit;color:#e7edf8;background:#0b1120;border:1px solid #3c4d68;border-radius:8px;padding:10px}input{width:240px}button{cursor:pointer}button:hover{border-color:#75e2c0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;text-align:right;font-size:14px;white-space:nowrap}th{background:#172338;color:#aab9ce;font-size:12px;padding:14px 20px}td{border-top:1px solid #243148;padding:14px 20px}tbody tr:hover{background:#172338}.badge{border-radius:6px;padding:5px 9px;background:#243148}.success{color:#75e2c0}.failure{color:#ffca7a}.blocked{color:#ff9b9b}.mono{font-family:Consolas,monospace;direction:ltr;text-align:right}.empty{text-align:center;color:#aab9ce;padding:30px;white-space:normal}.note{font-size:13px}#warning{color:#ffca7a}footer{color:#aab9ce;font-size:13px;padding:16px 0}@media(max-width:700px){main{padding:20px 12px}.cards{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start;flex-direction:column}input{width:100%}.tools{width:100%}.card{padding:16px}h1{font-size:25px}}
+</style>
+<main>
+<header><div><div class="brand" dir="ltr">MINI-SOC / LOCAL LAB</div><h1>תמונת מצב · ניטור כניסות</h1><p>אירועי כניסה, ניסיונות שנחסמו והתראות זיהוי במקום אחד.</p><a href="/">מעבר לטופס הכניסה ←</a></div><div><div id="status" class="status" role="status" aria-live="polite">מתחבר לנתונים…</div><p id="updated" class="note"></p><button id="refresh" type="button">רענון עכשיו</button></div></header>
+<div class="cards"><div class="card"><span>כניסות מוצלחות</span><strong id="success">—</strong></div><div class="card"><span>כניסות כושלות</span><strong id="failure">—</strong></div><div class="card"><span>ניסיונות שנחסמו</span><strong id="blocked">—</strong></div><div class="card"><span>התראות שנשמרו</span><strong id="alerts">—</strong></div></div>
+<p class="note">הסיכומים כוללים את כל הרשומות התקינות בקבצים. בכל טבלה מוצגות עד 200 הרשומות האחרונות לפי סדר הכתיבה, מהחדשה לישנה. חסימות הן אירועים היסטוריים, ולא רשימת כתובות שחסומות כרגע.</p>
+<p id="warning" role="status"></p>
+<section><div class="toolbar"><h2>אירועי כניסה</h2><div class="tools"><input id="search" type="search" placeholder="חיפוש לפי משתמש או כתובת IP" aria-label="חיפוש אירועי כניסה"><select id="result" aria-label="סינון תוצאת כניסה"><option value="">כל התוצאות</option value="success">הצלחה</option><option value="failure">כישלון</option><option value="blocked">נחסם</option></select></div></div><div class="scroll"><table><thead><tr><th>זמן מקומי</th><th>כתובת IP</th><th>משתמש</th><th>תוצאה</th></tr></thead><tbody id="events-body"></tbody></table></div></section>
+<section><div class="toolbar"><h2>התראות זיהוי</h2><select id="rule" aria-label="סינון כלל זיהוי"><option value="">כל הכללים</option value="failed_login_threshold">רצף כישלונות</option><option value="multiple_usernames">שמות משתמש מרובים</option><option value="success_after_failures">הצלחה אחרי כישלונות</option></select></div><div class="scroll"><table><thead><tr><th>זמן מקומי</th><th>כלל זיהוי</th><th>כתובת IP</th><th>משתמשים</th><th>כישלונות</th><th>חלון זמן</th></tr></thead><tbody id="alerts-body"></tbody></table></div></section>
+<footer>רענון אוטומטי כל 2 שניות · הזמנים מוצגים לפי אזור הזמן של הדפדפן · ההתראות נוצרות כשהגלאי פועל. היעדר התראות אינו אישור שהגלאי פעיל.</footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const results = {success:'הצלחה',failure:'כישלון',blocked:'נחסם'};
+const rules = {failed_login_threshold:'רצף כישלונות',multiple_usernames:'שמות משתמש מרובים',success_after_failures:'הצלחה אחרי כישלונות'};
+let snapshot = null, loading = false;
+function text(value){return value == null ? '—' : String(value)}
+function date(value){const d=new Date(value);return Number.isNaN(d.getTime()) ? text(value) : d.toLocaleString('he-IL')}
+function cell(row,value,css=''){const td=document.createElement('td');td.textContent=text(value);td.className=css;row.append(td);return td}
+function empty(body,columns,label){const row=document.createElement('tr');const td=cell(row,label,'empty');td.colSpan=columns;body.append(row)}
+function render(){
+ if(!snapshot)return;
+ for(const key of ['success','failure','blocked','alerts']) $(key).textContent=snapshot.counts[key].toLocaleString('he-IL');
+ const events=$('events-body');events.replaceChildren();
+ const query=$('search').value.trim().toLowerCase();
+ const filtered=snapshot.events.filter(e=>(!$('result').value||e.result===$('result').value)&&[e.username,e.source_ip].some(v=>text(v).toLowerCase().includes(query)));
+ for(const e of filtered){const row=document.createElement('tr');cell(row,date(e.timestamp));cell(row,e.source_ip,'mono');cell(row,e.username);const td=cell(row,'');const badge=document.createElement('span');badge.className='badge '+e.result;badge.textContent=results[e.result]||e.result;td.append(badge);events.append(row)}
+ if(!filtered.length)empty(events,4,snapshot.events.length?'לא נמצאו אירועים שתואמים לסינון':'עדיין אין אירועי כניסה. שלחו ניסיון כניסה כדי להתחיל.');
+ const alerts=$('alerts-body');alerts.replaceChildren();
+ const matches=snapshot.alerts.filter(a=>!$('rule').value||a.rule===$('rule').value);
+ for(const a of matches){const row=document.createElement('tr');cell(row,date(a.last_event_time));cell(row,rules[a.rule]||a.rule);cell(row,a.source_ip,'mono');cell(row,Array.isArray(a.usernames)?a.usernames.join(', '):a.username);cell(row,a.failed_login_count);cell(row,text(a.window_seconds)+' שניות');alerts.append(row)}
+ if(!matches.length)empty(alerts,6,snapshot.alerts.length?'לא נמצאו התראות שתואמות לסינון':'עדיין אין התראות שמורות. ודאו שהגלאי פועל.');
+ $('warning').textContent=snapshot.invalid_records ? `${snapshot.invalid_records} רשומות לא תקינות דולגו בתצוגה.` : '';
+}
+async function refresh(){
+ if(loading)return;loading=true;
+ try{const response=await fetch('/api/monitor',{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!response.ok)throw new Error();snapshot=await response.json();render();$('status').textContent='● הנתונים מעודכנים';$('status').className='status ok';$('updated').textContent='עדכון אחרון: '+date(snapshot.updated_at)}
+ catch(error){$('status').textContent='● העדכון נכשל — הנתונים המוצגים עשויים להיות ישנים';$('status').className='status error'}
+ finally{loading=false}
+}
+for(const id of ['search','result','rule']) $(id).addEventListener('input',render);
+$('refresh').addEventListener('click',refresh);refresh();setInterval(refresh,2000);
+</script>
+</html>
